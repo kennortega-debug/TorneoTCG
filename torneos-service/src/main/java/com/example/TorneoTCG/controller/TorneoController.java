@@ -43,8 +43,9 @@ public class TorneoController {
     private RondaService rondaService;
 
     @GetMapping
-    public ResponseEntity<List<TorneoDTO>> todas() {
-        List<TorneoDTO> lista = torneoService.obtenerTodos();
+    public ResponseEntity<List<TorneoDTO>> todas(
+            @RequestParam(required = false) String estado) {
+        List<TorneoDTO> lista = torneoService.obtenerPorEstado(estado);
         return new ResponseEntity<>(lista, HttpStatus.OK);
     }
 
