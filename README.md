@@ -1,6 +1,7 @@
 # TorneoTCG — Microservicio
+Se uso google gemini para mejorar la redaccion y crear el diagrama de flujo.
 
-Repositorio base del microservicio **TorneoTCG**, preparado como fundamento para el pipeline DevOps que se construirá durante el semestre (Evaluación Parcial 1 — DOY0101).
+Repositorio base del microservicio **TorneoTCG**, preparado como fundamento para el pipeline DevOps.
 
 ## Tabla de contenidos
 
@@ -16,17 +17,16 @@ Repositorio base del microservicio **TorneoTCG**, preparado como fundamento para
 
 ### 1.1 Modelo elegido: GitFlow
 
-Se adopta **GitFlow** en lugar de trunk-based development. Justificación para un entorno colaborativo en la nube simulado:
+Se adopta **GitFlow** en lugar de trunk-based development:
 
 | Criterio | Por qué favorece a GitFlow en este contexto |
 |---|---|
-| Equipo pequeño en formación (pareja) | GitFlow da roles y pasos explícitos (feature → develop → release → main), reduciendo ambigüedad mientras se aprende control de versiones. |
-| Entregas por evaluación / hitos | El curso exige ciclos claros de trabajo (features, hotfixes) que se pueden auditar por separado; GitFlow aísla cada cambio en su propia rama con historial trazable. |
+| Equipo pequeño  | GitFlow da roles y pasos explícitos (feature → develop → release → main), reduciendo ambigüedad mientras se aprende control de versiones. |
+| Entregas por evaluación / hitos | Ciclos claros de trabajo (features y hotfixes) que se pueden auditar por separado; GitFlow separa cada cambio en su propia rama con un historial trazable. |
 | Necesidad de estabilidad en `main` | `main` debe representar siempre una versión desplegable/estable simulando producción; GitFlow protege eso al no permitir commits directos, solo vía PR. |
 | Corrección urgente sin frenar desarrollo | El flujo `hotfix/*` permite reparar `main` sin interrumpir el trabajo en curso sobre `develop`. |
-| Trazabilidad para evaluación docente | Cada rama e historial de PR queda como evidencia verificable de IL1.1/IE1 e IE2. |
+| Trazabilidad para evaluación docente | Cada rama e historial de PR queda como evidencia verificable. |
 
-Trunk-based development es preferible con integración continua muy madura y equipos grandes que integran múltiples veces al día; no es el escenario de este encargo, donde se prioriza trazabilidad didáctica sobre velocidad de integración.
 
 ### 1.2 Ramas del repositorio
 
@@ -77,10 +77,8 @@ Flujo que articula repositorio + automatización + colaboración:
 1. **Código** — el/la desarrollador/a trabaja en `feature/*` o `hotfix/*` localmente.
 2. **Repositorio (GitHub)** — se sube la rama y se abre un **Pull Request**, que es el punto de control de calidad y colaboración (revisión de código, comentarios, aprobación).
 3. **Automatización (GitHub Actions)** — cada `push` a `develop` y cada PR hacia `main` dispara el workflow de CI: build + tests. Si falla, el PR queda bloqueado.
-4. **Colaboración** — revisiones cruzadas entre integrantes de la pareja antes de aprobar el merge (ver sección 3.3).
+4. **Colaboración** — revisiones cruzadas entre integrantes de la pareja antes de aprobar el merge.
 5. **Entorno cloud simulado** — GitHub Actions actúa como el entorno de ejecución remoto (runner en la nube) donde se valida el código fuera de la máquina local, simulando un pipeline CI/CD real.
-
-Este flujo cumple IL1.2: articula repositorio (ramas + PRs), automatización (Actions) y colaboración (revisiones) en un entorno cloud simulado.
 
 ---
 
@@ -139,7 +137,7 @@ TorneoTCG/
 
 ## 4. Simulación de trabajo colaborativo
 
-Evidencia mínima requerida por el encargo (ver `docs/GUIA_PASO_A_PASO.md` para los comandos exactos):
+Evidencia:
 
 - ✅ 2 Pull Requests tipo **feature** → `feature/<nombre>` hacia `develop`
 - ✅ 1 Pull Request tipo **hotfix** → `hotfix/<nombre>` hacia `main` (con réplica a `develop`)
@@ -154,5 +152,5 @@ Ver `.github/workflows/ci.yml`. Se ejecuta automáticamente en:
 - `push` a `develop`
 - `pull_request` con destino `main`
 
-El workflow compila el proyecto con Maven y ejecuta las pruebas unitarias, actuando como gate de calidad antes de fusionar código, cumpliendo IL1.2/IE3/IE4.
+El workflow compila el proyecto con Maven y ejecuta las pruebas unitarias, actuando como gate de calidad antes de fusionar código.
 
