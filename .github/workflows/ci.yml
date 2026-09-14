@@ -33,11 +33,11 @@ jobs:
 
       - name: Build con Maven
         working-directory: ${{ matrix.service }}
-        run: ./mvnw -B clean package
+        run: bash mvnw -B clean package
 
       - name: Ejecutar pruebas unitarias
         working-directory: ${{ matrix.service }}
-        run: ./mvnw -B test
+        run: bash mvnw -B test
 
       - name: Publicar resultados de pruebas
         if: always()
