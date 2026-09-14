@@ -1,0 +1,88 @@
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: jugador-service-jugadores
+          uri: lb://jugador-service
+          predicates:
+            - Path=/api/v1/jugadores/**
+        - id: jugador-service-cartas
+          uri: lb://jugador-service
+          predicates:
+            - Path=/api/v1/cartas/**
+        - id: jugador-service-mazos
+          uri: lb://jugador-service
+          predicates:
+            - Path=/api/v1/mazos/**
+        - id: jugador-service-cartas-mazos
+          uri: lb://jugador-service
+          predicates:
+            - Path=/api/v1/cartas-mazos/**
+        - id: recinto-service-recintos
+          uri: lb://recinto-service
+          predicates:
+            - Path=/api/v1/recintos/**
+        - id: recinto-service-regiones
+          uri: lb://recinto-service
+          predicates:
+            - Path=/api/v1/regiones/**
+        - id: recinto-service-comunas
+          uri: lb://recinto-service
+          predicates:
+            - Path=/api/v1/comunas/**
+        - id: recinto-service-organizadores
+          uri: lb://recinto-service
+          predicates:
+            - Path=/api/v1/organizadores/**
+        - id: torneos-service-torneos
+          uri: lb://torneos-service
+          predicates:
+            - Path=/api/v1/torneos/**
+        - id: torneos-service-rondas
+          uri: lb://torneos-service
+          predicates:
+            - Path=/api/v1/rondas/**
+        - id: torneos-service-participaciones
+          uri: lb://torneos-service
+          predicates:
+            - Path=/api/v1/participaciones/**
+        - id: torneos-service-partidas
+          uri: lb://torneos-service
+          predicates:
+            - Path=/api/v1/partidas/**
+        - id: torneos-service-resultados
+          uri: lb://torneos-service
+          predicates:
+            - Path=/api/v1/resultados/**
+        - id: torneos-service-v2-torneos
+          uri: lb://torneos-service
+          predicates:
+            - Path=/api/v2/torneos/**
+        - id: torneos-service-v2-rondas
+          uri: lb://torneos-service
+          predicates:
+            - Path=/api/v2/rondas/**
+        - id: torneos-service-v2-participaciones
+          uri: lb://torneos-service
+          predicates:
+            - Path=/api/v2/participaciones/**
+        - id: torneos-service-v2-partidas
+          uri: lb://torneos-service
+          predicates:
+            - Path=/api/v2/partidas/**
+        - id: torneos-service-v2-resultados
+          uri: lb://torneos-service
+          predicates:
+            - Path=/api/v2/resultados/**
+
+server:
+  port: 8080
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true

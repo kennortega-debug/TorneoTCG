@@ -1,0 +1,20 @@
+# Maven
+target/
+**/target/
+
+# Java
+*.class
+*.jar
+*.war
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
