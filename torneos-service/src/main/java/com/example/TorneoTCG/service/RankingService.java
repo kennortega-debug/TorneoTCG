@@ -35,6 +35,10 @@ public class RankingService {
     private ResultadoRepository resultadoRepository;
 
     public List<RankingDTO> obtenerRankingPorTorneo(Long idTorneo) {
+        return obtenerRankingPorTorneo(idTorneo, 0);
+    }
+
+    public List<RankingDTO> obtenerRankingPorTorneo(Long idTorneo, int limite) {
         Torneo torneo = torneoRepository.findById(idTorneo)
                 .orElseThrow(() -> new RuntimeException("Torneo no encontrado"));
 
@@ -59,6 +63,11 @@ public class RankingService {
 
         List<RankingDTO> lista = new ArrayList<>(ranking.values());
         lista.sort(Comparator.comparing(RankingDTO::getPuntajeTotal).reversed());
+
+        if (limite > 0 && limite < lista.size()) {
+            return new ArrayList<>(lista.subList(0, limite));
+        }
+
         return lista;
     }
 
