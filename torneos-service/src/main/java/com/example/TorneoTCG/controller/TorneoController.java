@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.TorneoTCG.dto.RankingDTO;
@@ -140,9 +141,14 @@ public class TorneoController {
     }
 
     @GetMapping("/{idTorneo}/ranking")
-    public ResponseEntity<?> obtenerRanking(@PathVariable Long idTorneo) {
+    public ResponseEntity<?> obtenerRanking(
+            @PathVariable Long idTorneo,
+            @RequestParam(defaultValue = "0") int limite) {
         try {
-            List<RankingDTO> ranking = rankingService.obtenerRankingPorTorneo(idTorneo);
+            if (limite < 0) {
+                return new ResponseEntity<>("El límite no puede ser negativo", HttpStatus.BAD_REQUEST);
+            }
+            List<RankingDTO> ranking = rankingService.obtenerRankingPorTorneo(idTorneo, limite);
             return new ResponseEntity<>(ranking, HttpStatus.OK);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
