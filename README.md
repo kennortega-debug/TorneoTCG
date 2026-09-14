@@ -1,86 +1,158 @@
-# Torneo TCG - Magic: The Gathering (Backend)
+# TorneoTCG — Microservicio
 
-Sistema distribuido basado en arquitectura de microservicios para la gestión completa de torneos de Magic Commander. Este proyecto permite administrar jugadores, mazos, inscripciones, generación de rondas y registro de resultados.
+Repositorio base del microservicio **TorneoTCG**, preparado como fundamento para el pipeline DevOps que se construirá durante el semestre (Evaluación Parcial 1 — DOY0101).
 
+## Tabla de contenidos
 
-##  Arquitectura y Microservicios Implementados
-
-El sistema está construido bajo el patrón de diseño **CSR (Controller-Service-Repository)**  y se compone de los siguientes microservicios independientes:
-
-1. **Microservicio Jugadores y Mazos:** Gestión de usuarios y la composición de sus cartas.
-2. **Microservicio Torneos y Rondas:** Estructura de competiciones e inscripciones.
-3. **Microservicio Partidas y Resultados:** Registro de enfrentamientos y puntajes.
-4. **Microservicio Infraestructura:** Gestión de locales, organizadores y ubicaciones.
-5. **API Gateway:** Enrutador central que unifica los endpoints (ej. `http://localhost:8080/api/v1/...`).
-6. **Eureka Server:** Servicio de descubrimiento (Service Discovery) para la conexión dinámica entre microservicios sin depender de puertos estáticos.
+1. [Estrategia de ramificación](#1-estrategia-de-ramificación)
+2. [Flujo de trabajo DevOps](#2-flujo-de-trabajo-devops)
+3. [Convenciones del repositorio](#3-convenciones-del-repositorio)
+4. [Simulación de trabajo colaborativo](#4-simulación-de-trabajo-colaborativo)
+5. [Integración continua (GitHub Actions)](#5-integración-continua-github-actions)
 
 ---
 
-## 🛠️ Tecnologías y Configuraciones Destacadas
+## 1. Estrategia de ramificación
 
-Este ecosistema backend incorpora las siguientes tecnologías y buenas prácticas:
+### 1.1 Modelo elegido: GitFlow
 
-* **Java & Spring Boot:** Framework principal.
-* **Spring Cloud Netflix Eureka:** Para el registro y descubrimiento automático de microservicios.
-* **Spring Cloud Gateway:** Enrutamiento centralizado y balanceo de carga (`@LoadBalanced`).
-* **Comunicación Inter-servicios:** Uso de DTOs externos con `@JsonIgnoreProperties(ignoreUnknown = true)` para manejar datos cruzados.
-* **HATEOAS:** Implementado para respuestas de API más enriquecidas y navegables.
-* **Perfiles YAML (`application.yml`):** Configuraciones dinámicas para entornos de desarrollo (`dev`), pruebas (`test`) y producción (`prod`).
-* **Documentación Centralizada (Swagger/OpenAPI):** Unificación de la documentación de todos los microservicios accesible desde el Gateway.
-* **CORS Origin:** Configuración implementada en los microservicios mediante `WebConfig` para permitir el consumo desde aplicaciones Frontend.
-* **Validaciones:** Lógica de validación separada en clases específicas (ej. `JugadorValidaciones`) para mantener los Services ligeros.
+Se adopta **GitFlow** en lugar de trunk-based development. Justificación para un entorno colaborativo en la nube simulado:
 
----
+| Criterio | Por qué favorece a GitFlow en este contexto |
+|---|---|
+| Equipo pequeño en formación (pareja) | GitFlow da roles y pasos explícitos (feature → develop → release → main), reduciendo ambigüedad mientras se aprende control de versiones. |
+| Entregas por evaluación / hitos | El curso exige ciclos claros de trabajo (features, hotfixes) que se pueden auditar por separado; GitFlow aísla cada cambio en su propia rama con historial trazable. |
+| Necesidad de estabilidad en `main` | `main` debe representar siempre una versión desplegable/estable simulando producción; GitFlow protege eso al no permitir commits directos, solo vía PR. |
+| Corrección urgente sin frenar desarrollo | El flujo `hotfix/*` permite reparar `main` sin interrumpir el trabajo en curso sobre `develop`. |
+| Trazabilidad para evaluación docente | Cada rama e historial de PR queda como evidencia verificable de IL1.1/IE1 e IE2. |
 
-## Instrucciones de Ejecución (Local)
+Trunk-based development es preferible con integración continua muy madura y equipos grandes que integran múltiples veces al día; no es el escenario de este encargo, donde se prioriza trazabilidad didáctica sobre velocidad de integración.
 
-Para facilitar el despliegue de todos los microservicios al mismo tiempo, hemos creado scripts de automatización.
+### 1.2 Ramas del repositorio
 
-**Para Windows:**
-1. Clona el repositorio.
-2. Haz doble clic en el archivo `iniciar-todo.bat`.
+| Rama | Rol | Se origina de | Se fusiona en |
+|---|---|---|---|
+| `main` | Código estable, listo para "producción" simulada. Solo recibe merges vía PR revisado. | — | — |
+| `develop` | Integración de features en curso. Es la base de trabajo diaria del equipo. | `main` (una vez) | `main` (vía release/PR) |
+| `feature/<nombre>` | Desarrollo de una funcionalidad puntual. | `develop` | `develop` |
+| `hotfix/<nombre>` | Corrección urgente sobre producción. | `main` | `main` **y** `develop` |
 
-**Para Mac / Linux:**
-1. Abre una terminal en la raíz del proyecto.
-2. Otorga permisos de ejecución: `chmod +x iniciar-todo.sh`
-3. Ejecuta el script: `./iniciar-todo.sh`
+### 1.3 Convención de naming de ramas
 
----
-
-## 🔗 Enlaces y Rutas Principales
-
-### API Gateway (Rutas Base)
-Todas las peticiones deben pasar por el API Gateway en el puerto `8080`:
-* Jugadores: `http://localhost:8080/api/v1/jugadores`
-* Torneos: `http://localhost:8080/api/v1/torneos`
-* 
-
-### Documentación Swagger
-Puedes visualizar los endpoints, modelos de datos y probar la API directamente en:
-* 📖 **[Swagger UI Unificado](http://localhost:8080/swagger-ui/index.html)**
-
-### Eureka Server
-Para verificar que todos los microservicios están levantados y registrados:
-* 🌐 **[Eureka Dashboard](http://localhost:8761/eureka/)**
+- `feature/<verbo-en-infinitivo-descripcion>` → ej. `feature/agregar-registro-torneo`, `feature/agregar-endpoint-partidas`
+- `hotfix/<descripcion-del-bug>` → ej. `hotfix/corregir-validacion-puntaje`
+- Minúsculas, palabras separadas por guion medio, sin espacios ni tildes.
 
 ---
 
-## Pruebas Unitarias
-El proyecto cuenta con pruebas unitarias implementadas con **JUnit 5 y Mockito**, alcanzando más del 80% de cobertura. Las pruebas siguen la estructura *Given-When-Then* validando la lógica de negocio sin depender de la base de datos real.
+## 2. Flujo de trabajo DevOps
 
----
+Flujo que articula repositorio + automatización + colaboración:
 
-## Ejecución con Docker
-
-Para construir y levantar la arquitectura completa con Docker Compose:
-
-```bash
-docker compose build --no-cache
-docker compose up
-docker compose down
-
-```bash
-docker-compose build --no-cache
-docker-compose up
-docker-compose down
 ```
+ Dev A                Dev B
+   │                    │
+   ├─ feature/x         ├─ feature/y
+   │     │              │     │
+   │     ▼              │     ▼
+   │  commits            commits
+   │     │              │     │
+   │     ▼              │     ▼
+   │   Pull Request ───► develop ◄─── Pull Request
+   │                       │
+   │            [GitHub Actions: build + test]
+   │                       │
+   │                 Pull Request
+   │                       │
+   │                       ▼
+   │                     main
+   │                       │
+   │            [GitHub Actions: build + test]
+   │                       │
+   └────── hotfix/z ───────┘ (desde main, PR a main y luego a develop)
+```
+
+**Etapas del pipeline:**
+
+1. **Código** — el/la desarrollador/a trabaja en `feature/*` o `hotfix/*` localmente.
+2. **Repositorio (GitHub)** — se sube la rama y se abre un **Pull Request**, que es el punto de control de calidad y colaboración (revisión de código, comentarios, aprobación).
+3. **Automatización (GitHub Actions)** — cada `push` a `develop` y cada PR hacia `main` dispara el workflow de CI: build + tests. Si falla, el PR queda bloqueado.
+4. **Colaboración** — revisiones cruzadas entre integrantes de la pareja antes de aprobar el merge (ver sección 3.3).
+5. **Entorno cloud simulado** — GitHub Actions actúa como el entorno de ejecución remoto (runner en la nube) donde se valida el código fuera de la máquina local, simulando un pipeline CI/CD real.
+
+Este flujo cumple IL1.2: articula repositorio (ramas + PRs), automatización (Actions) y colaboración (revisiones) en un entorno cloud simulado.
+
+---
+
+## 3. Convenciones del repositorio
+
+### 3.1 Mensajes de commit
+
+Se usa **Conventional Commits**: `<tipo>(<alcance opcional>): <descripción corta>`
+
+| Tipo | Uso |
+|---|---|
+| `feat` | Nueva funcionalidad |
+| `fix` | Corrección de bug |
+| `docs` | Cambios de documentación |
+| `chore` | Tareas de mantenimiento (config, dependencias) |
+| `test` | Agregar o modificar pruebas |
+| `refactor` | Cambio de código sin alterar comportamiento |
+
+Ejemplos:
+```
+feat(torneos): agregar endpoint de creación de torneo
+fix(partidas): corregir cálculo de puntaje final
+docs(readme): documentar convenciones de ramas
+```
+
+### 3.2 Flujo de merge
+
+1. Nunca se commitea directo a `main` ni `develop`.
+2. Toda incorporación de código pasa por **Pull Request**.
+3. El PR debe pasar el check de GitHub Actions (build + tests) antes de poder fusionarse.
+4. Se usa **Squash and merge** para features (historial limpio en `develop`), y **merge commit** para integrar `release`/`hotfix` a `main` (preserva trazabilidad de la corrección).
+5. Todo `hotfix` fusionado a `main` se replica inmediatamente a `develop` para no perder la corrección.
+
+### 3.3 Estrategia de revisión (code review)
+
+- Mínimo **1 aprobación** de la otra persona de la pareja antes del merge.
+- El revisor valida: que el build/CI pase, que el nombre de rama y commits sigan la convención, y que el cambio resuelva lo que dice el PR.
+- Comentarios de revisión se resuelven (`resolve conversation`) antes de aprobar.
+- Se prohíbe auto-mergear el propio PR sin revisión de la contraparte.
+
+### 3.4 Estructura de carpetas (microservicio Java/Spring Boot)
+
+```
+TorneoTCG/
+├── .github/workflows/ci.yml
+├── src/
+│   ├── main/java/...
+│   └── test/java/...
+├── pom.xml (o build.gradle)
+├── README.md
+└── docs/
+    └── BUENAS_PRACTICAS.md
+```
+
+---
+
+## 4. Simulación de trabajo colaborativo
+
+Evidencia mínima requerida por el encargo (ver `docs/GUIA_PASO_A_PASO.md` para los comandos exactos):
+
+- ✅ 2 Pull Requests tipo **feature** → `feature/<nombre>` hacia `develop`
+- ✅ 1 Pull Request tipo **hotfix** → `hotfix/<nombre>` hacia `main` (con réplica a `develop`)
+
+Cada PR debe documentar en su descripción: qué cambia, por qué, y quién revisó.
+
+---
+
+## 5. Integración continua (GitHub Actions)
+
+Ver `.github/workflows/ci.yml`. Se ejecuta automáticamente en:
+- `push` a `develop`
+- `pull_request` con destino `main`
+
+El workflow compila el proyecto con Maven y ejecuta las pruebas unitarias, actuando como gate de calidad antes de fusionar código, cumpliendo IL1.2/IE3/IE4.
+
