@@ -78,9 +78,6 @@ Para construir y levantar la arquitectura completa con Docker Compose:
 docker compose build --no-cache
 docker compose up
 docker compose down
-```
-
-Alternativa antigua:
 
 ```bash
 docker-compose build --no-cache
