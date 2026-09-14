@@ -34,6 +34,21 @@ public class TorneoService {
         return listaDTO;
     }
 
+    public List<TorneoDTO> obtenerPorEstado(String estado) {
+        if (estado == null || estado.isBlank()) {
+            return obtenerTodos();
+        }
+
+        List<TorneoDTO> listaDTO = new ArrayList<>();
+        List<Torneo> torneos = torneoRepository.findByEstadoIgnoreCase(estado.trim());
+
+        for (Torneo torneo : torneos) {
+            listaDTO.add(convertirADTO(torneo));
+        }
+
+        return listaDTO;
+    }
+
     public TorneoDTO buscarPorId(Long id) {
 
         Torneo torneo = torneoRepository.findById(id)
@@ -53,28 +68,28 @@ public class TorneoService {
     }
 
     public TorneoDTO actualizar(Long id, Torneo torneo) {
-    Torneo existente = torneoRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Torneo no encontrado"));
-    existente.setNombre(torneo.getNombre());
-    existente.setFechaInicio(torneo.getFechaInicio());
-    existente.setFechaFin(torneo.getFechaFin());
-    existente.setEstado(torneo.getEstado());
+        Torneo existente = torneoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Torneo no encontrado"));
+        existente.setNombre(torneo.getNombre());
+        existente.setFechaInicio(torneo.getFechaInicio());
+        existente.setFechaFin(torneo.getFechaFin());
+        existente.setEstado(torneo.getEstado());
 
-    validarRecinto(torneo.getIdRecinto());
-    existente.setIdRecinto(torneo.getIdRecinto());
+        validarRecinto(torneo.getIdRecinto());
+        existente.setIdRecinto(torneo.getIdRecinto());
 
-    Torneo actualizado = torneoRepository.save(existente);
-    return convertirADTO(actualizado);
-}
-
-public String eliminar(Long id) {
-    if (torneoRepository.existsById(id)) {
-        torneoRepository.deleteById(id);
-        return "Torneo eliminado correctamente";
-    } else {
-        return "Torneo no encontrado";
+        Torneo actualizado = torneoRepository.save(existente);
+        return convertirADTO(actualizado);
     }
-}
+
+    public String eliminar(Long id) {
+        if (torneoRepository.existsById(id)) {
+            torneoRepository.deleteById(id);
+            return "Torneo eliminado correctamente";
+        } else {
+            return "Torneo no encontrado";
+        }
+    }
 
     private void validarRecinto(Long idRecinto) {
 
