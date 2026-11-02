@@ -1,101 +1,175 @@
+name: torneotcg
 services:
   mysql-db:
     image: mysql:8.0
     container_name: mysql-db
     environment:
-      MYSQL_ROOT_PASSWORD: 1234
-    ports:
-      - "3306:3306"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Define MYSQL_ROOT_PASSWORD en .env}
+    ports: ["127.0.0.1:3306:3306"]
+    volumes: [mysql_data:/var/lib/mysql]
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p1234"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
       interval: 10s
       timeout: 5s
-      retries: 10
-    networks:
-      - network-tcg
+      retries: 15
+      start_period: 30s
+    restart: unless-stopped
+    networks: [network-tcg]
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 1G
 
   eureka-server:
+    image: torneotcg-eureka-server:${IMAGE_TAG:-local}
     build: ./eureka-server
     container_name: eureka-server
-    ports:
-      - "8761:8761"
+    ports: ["8761:8761"]
+    environment:
+      SERVER_PORT: 8761
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8761"]
-      interval: 10s
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8761/actuator/health >/dev/null"]
+      interval: 15s
       timeout: 5s
-      retries: 10
-    networks:
-      - network-tcg
+      retries: 15
+      start_period: 60s
+    restart: unless-stopped
+    init: true
+    security_opt: ["no-new-privileges:true"]
+    networks: [network-tcg]
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 512M
 
   jugador-service:
+    image: torneotcg-jugador-service:${IMAGE_TAG:-local}
     build: ./jugador-service
     container_name: jugador-service
-    ports:
-      - "8082:8082"
+    ports: ["8082:8082"]
     environment:
+      SERVER_PORT: 8082
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/db_jugador_tcg?createDatabaseIfNotExist=true
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: 1234
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Define MYSQL_ROOT_PASSWORD en .env}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
     depends_on:
-      mysql-db:
-        condition: service_healthy
-      eureka-server:
-        condition: service_healthy
-    networks:
-      - network-tcg
+      mysql-db: {condition: service_healthy}
+      eureka-server: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8082/actuator/health >/dev/null"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 90s
+    restart: unless-stopped
+    init: true
+    security_opt: ["no-new-privileges:true"]
+    networks: [network-tcg]
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 768M
 
   recinto-service:
+    image: torneotcg-recinto-service:${IMAGE_TAG:-local}
     build: ./recinto-service
     container_name: recinto-service
-    ports:
-      - "8081:8081"
+    ports: ["8081:8081"]
     environment:
+      SERVER_PORT: 8081
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/db_recinto_tcg?createDatabaseIfNotExist=true
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: 1234
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Define MYSQL_ROOT_PASSWORD en .env}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
     depends_on:
-      mysql-db:
-        condition: service_healthy
-      eureka-server:
-        condition: service_healthy
-    networks:
-      - network-tcg
+      mysql-db: {condition: service_healthy}
+      eureka-server: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8081/actuator/health >/dev/null"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 90s
+    restart: unless-stopped
+    init: true
+    security_opt: ["no-new-privileges:true"]
+    networks: [network-tcg]
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 768M
 
   torneos-service:
+    image: torneotcg-torneos-service:${IMAGE_TAG:-local}
     build: ./torneos-service
     container_name: torneos-service
-    ports:
-      - "8083:8083"
+    ports: ["8083:8083"]
     environment:
+      SERVER_PORT: 8083
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/db_torneo_tcg?createDatabaseIfNotExist=true
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: 1234
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Define MYSQL_ROOT_PASSWORD en .env}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
     depends_on:
-      mysql-db:
-        condition: service_healthy
-      eureka-server:
-        condition: service_healthy
-    networks:
-      - network-tcg
+      mysql-db: {condition: service_healthy}
+      eureka-server: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8083/actuator/health >/dev/null"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 90s
+    restart: unless-stopped
+    init: true
+    security_opt: ["no-new-privileges:true"]
+    networks: [network-tcg]
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 768M
 
   api-gateway:
+    image: torneotcg-api-gateway:${IMAGE_TAG:-local}
     build: ./api-gateway
     container_name: api-gateway
-    ports:
-      - "8080:8080"
+    ports: ["8080:8080"]
     environment:
+      SERVER_PORT: 8080
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
     depends_on:
-      mysql-db:
-        condition: service_healthy
-      eureka-server:
-        condition: service_healthy
-    networks:
-      - network-tcg
+      eureka-server: {condition: service_healthy}
+      jugador-service: {condition: service_healthy}
+      recinto-service: {condition: service_healthy}
+      torneos-service: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health >/dev/null"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+    restart: unless-stopped
+    init: true
+    security_opt: ["no-new-privileges:true"]
+    networks: [network-tcg]
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 512M
 
 networks:
   network-tcg:
     driver: bridge
+volumes:
+  mysql_data:

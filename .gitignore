@@ -18,3 +18,10 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Local secrets and analysis output
+.env
+.env.*
+!.env.example
+.scannerwork/
+.sonar/
