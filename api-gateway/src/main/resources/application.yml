@@ -3,7 +3,9 @@ spring:
     name: api-gateway
   cloud:
     gateway:
-      routes:
+      server:
+        webflux:
+          routes:
         - id: jugador-service-jugadores
           uri: lb://jugador-service
           predicates:
