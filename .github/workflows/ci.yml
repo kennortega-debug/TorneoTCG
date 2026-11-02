@@ -41,7 +41,7 @@ jobs:
         run: mvn -B -ntp clean verify
       - name: Publicar reportes de pruebas
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: surefire-${{ matrix.service }}
           path: ${{ matrix.service }}/target/surefire-reports/
