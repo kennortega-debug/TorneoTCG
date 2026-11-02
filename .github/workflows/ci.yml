@@ -29,7 +29,7 @@ jobs:
           - torneos-service
     steps:
       - name: Descargar código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Configurar Java 21
         uses: actions/setup-java@v4
         with:
@@ -77,7 +77,7 @@ jobs:
           SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
     steps:
       - name: Descargar código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Configurar Java 21
         uses: actions/setup-java@v4
         with:
@@ -132,7 +132,7 @@ jobs:
       IMAGE_TAG: ${{ github.sha }}
     steps:
       - name: Descargar código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Validar Docker Compose
         run: docker compose config --quiet
         env:
