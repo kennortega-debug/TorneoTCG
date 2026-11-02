@@ -1,5 +1,7 @@
 # TorneoTCG — Pipeline CI/CD con GitHub Actions
 
+Se uso ChatGPT para la redacción del readme 
+
 Microservicios Java 21 / Spring Boot para gestión de torneos TCG. Este repositorio implementa un flujo CI/CD automatizado con pruebas, análisis estático, escaneo de imágenes Docker y despliegue simulado mediante Docker Compose.
 
 ## Requisitos de la Evaluación Parcial 2
