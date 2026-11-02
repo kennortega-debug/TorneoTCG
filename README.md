@@ -74,7 +74,7 @@ Archivo: [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
 
 ### Etapas y gates
 
-1. **Tests:** matriz para los cinco módulos, configura JDK 21 y ejecuta `mvn clean verify`. Publica reportes Surefire aunque falle una prueba. Los tests de carga de contexto usan H2 en memoria y desactivan Flyway/Eureka para no depender de servicios externos.
+1. **Tests:** matriz para los cinco módulos, configura JDK 21 y ejecuta `mvn clean verify`. Publica reportes Surefire aunque falle una prueba. Los tests de carga de contexto usan H2 en memoria y desactivan Flyway/Eureka para no depender de servicios externos. Se agregaron pruebas unitarias Mockito para conversión y persistencia de jugadores, validación de recintos y eliminación/búsqueda de torneos.
 2. **Seguridad / calidad:** en push a main inicia SonarQube Community y PostgreSQL como servicios efímeros del runner, compila los módulos, analiza el código y espera el Quality Gate. Un Quality Gate fallido detiene las etapas posteriores. En Pull Requests se ejecutan pruebas y escaneo Trivy; el análisis SonarQube se exige antes del despliegue en main.
 3. **Build de contenedores:** Docker Compose construye las cinco imágenes desde sus Dockerfiles.
 4. **Escaneo de imágenes:** Trivy analiza vulnerabilidades de sistema operativo y dependencias. Vulnerabilidades HIGH o CRITICAL sin corregir bloquean el pipeline.
