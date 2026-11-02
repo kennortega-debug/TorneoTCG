@@ -31,7 +31,7 @@ jobs:
       - name: Descargar código
         uses: actions/checkout@v4
       - name: Configurar Java 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '21'
@@ -79,7 +79,7 @@ jobs:
       - name: Descargar código
         uses: actions/checkout@v4
       - name: Configurar Java 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '21'
