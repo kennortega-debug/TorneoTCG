@@ -116,7 +116,7 @@ jobs:
           echo "::add-mask::$token"
           echo "SONAR_TOKEN=$token" >> "$GITHUB_ENV"
       - name: Analizar código y aplicar Quality Gate
-        uses: SonarSource/sonarqube-scan-action@v5
+        uses: SonarSource/sonarqube-scan-action@v8
         env:
           SONAR_HOST_URL: http://localhost:9000
           SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
