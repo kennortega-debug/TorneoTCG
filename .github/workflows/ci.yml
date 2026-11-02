@@ -142,7 +142,7 @@ jobs:
       - name: Construir imágenes Docker
         run: docker compose build --pull
       - name: Escanear imagen API Gateway
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: torneotcg-api-gateway:${{ github.sha }}
           format: table
@@ -151,7 +151,7 @@ jobs:
           vuln-type: os,library
           severity: HIGH,CRITICAL
       - name: Escanear imagen Eureka
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: torneotcg-eureka-server:${{ github.sha }}
           format: table
@@ -160,7 +160,7 @@ jobs:
           vuln-type: os,library
           severity: HIGH,CRITICAL
       - name: Escanear imagen Jugador
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: torneotcg-jugador-service:${{ github.sha }}
           format: table
@@ -169,7 +169,7 @@ jobs:
           vuln-type: os,library
           severity: HIGH,CRITICAL
       - name: Escanear imagen Recinto
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: torneotcg-recinto-service:${{ github.sha }}
           format: table
@@ -178,7 +178,7 @@ jobs:
           vuln-type: os,library
           severity: HIGH,CRITICAL
       - name: Escanear imagen Torneos
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: torneotcg-torneos-service:${{ github.sha }}
           format: table
