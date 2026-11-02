@@ -21,7 +21,7 @@ Microservicios Java 21 / Spring Boot para gestión de torneos TCG. Este reposito
 - `torneos-service`: puerto 8083.
 - `mysql-db`: persistencia MySQL 8.
 
-Los microservicios se conectan a MySQL y Eureka usando los nombres DNS de los servicios de Docker Compose, no `localhost`. Los servicios Spring Boot publican `/actuator/health` para healthchecks.
+Los microservicios se conectan a MySQL y Eureka usando los nombres DNS de los servicios de Docker Compose, no `localhost`. Los servicios Spring Boot incluyen Spring Boot Actuator y publican `/actuator/health` para healthchecks.
 
 ## Ejecución local
 
