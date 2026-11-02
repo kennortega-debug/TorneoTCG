@@ -1,14 +1,22 @@
-name: CI - TorneoTCG
+name: CI/CD - TorneoTCG
 
 on:
   push:
-    branches: [ develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: torneotcg-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build-and-test:
-    name: Build & Test (${{ matrix.service }})
+  tests:
+    name: Pruebas - ${{ matrix.service }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -19,29 +27,177 @@ jobs:
           - jugador-service
           - recinto-service
           - torneos-service
-
     steps:
-      - name: Checkout del código
+      - name: Descargar código
         uses: actions/checkout@v4
-
-      - name: Configurar JDK 17
+      - name: Configurar Java 21
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '17'
-          cache: 'maven'
-
-      - name: Build con Maven
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Compilar y ejecutar pruebas
         working-directory: ${{ matrix.service }}
-        run: mvn -B clean package
-
-      - name: Ejecutar pruebas unitarias
-        working-directory: ${{ matrix.service }}
-        run: mvn -B test
-
-      - name: Publicar resultados de pruebas
+        run: mvn -B -ntp clean verify
+      - name: Publicar reportes de pruebas
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: surefire-reports-${{ matrix.service }}
+          name: surefire-${{ matrix.service }}
           path: ${{ matrix.service }}/target/surefire-reports/
+          if-no-files-found: warn
+
+  security:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    name: Análisis estático SonarQube
+    needs: tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: sonar
+          POSTGRES_PASSWORD: sonar
+          POSTGRES_DB: sonar
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U sonar -d sonar"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+      sonarqube:
+        image: sonarqube:community
+        ports:
+          - 9000:9000
+        env:
+          SONAR_JDBC_URL: jdbc:postgresql://postgres:5432/sonar
+          SONAR_JDBC_USERNAME: sonar
+          SONAR_JDBC_PASSWORD: sonar
+          SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+      - name: Configurar Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Compilar módulos para análisis
+        shell: bash
+        run: |
+          set -euo pipefail
+          for service in api-gateway eureka-server jugador-service recinto-service torneos-service; do
+            mvn -B -ntp -f "$service/pom.xml" clean verify
+          done
+      - name: Esperar disponibilidad de SonarQube
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 90); do
+            status="$(curl -fsS http://localhost:9000/api/system/status 2>/dev/null | jq -r '.status' || true)"
+            if [ "$status" = "UP" ]; then
+              echo "SonarQube está disponible."
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::SonarQube no inició dentro del tiempo esperado."
+          exit 1
+      - name: Crear token temporal de análisis
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsS -u admin:admin -X POST             --data-urlencode "login=admin"             --data-urlencode "previousPassword=admin"             --data-urlencode "password=LocalSonar-${GITHUB_RUN_ID}-Secure"             http://localhost:9000/api/users/change_password
+          response="$(curl -fsS -u "admin:LocalSonar-${GITHUB_RUN_ID}-Secure" -X POST "http://localhost:9000/api/user_tokens/generate?name=github-actions-${GITHUB_RUN_ID}")"
+          token="$(echo "$response" | jq -r '.token')"
+          test -n "$token" && test "$token" != "null"
+          echo "::add-mask::$token"
+          echo "SONAR_TOKEN=$token" >> "$GITHUB_ENV"
+      - name: Analizar código y aplicar Quality Gate
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_HOST_URL: http://localhost:9000
+          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+        with:
+          args: -Dsonar.qualitygate.wait=true -Dsonar.qualitygate.timeout=300
+
+  container-build-scan-deploy:
+    if: always() && needs.tests.result == 'success' && (needs.security.result == 'success' || needs.security.result == 'skipped')
+    name: Construcción, escaneo y despliegue Compose
+    needs: [tests, security]
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_TAG: ${{ github.sha }}
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+      - name: Validar Docker Compose
+        run: docker compose config --quiet
+        env:
+          MYSQL_ROOT_PASSWORD: local-ci-validation-only
+      - name: Generar credencial efímera para MySQL
+        run: echo "MYSQL_ROOT_PASSWORD=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+      - name: Construir imágenes Docker
+        run: docker compose build --pull
+      - name: Escanear imagen API Gateway
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: torneotcg-api-gateway:${{ github.sha }}
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: HIGH,CRITICAL
+      - name: Escanear imagen Eureka
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: torneotcg-eureka-server:${{ github.sha }}
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: HIGH,CRITICAL
+      - name: Escanear imagen Jugador
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: torneotcg-jugador-service:${{ github.sha }}
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: HIGH,CRITICAL
+      - name: Escanear imagen Recinto
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: torneotcg-recinto-service:${{ github.sha }}
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: HIGH,CRITICAL
+      - name: Escanear imagen Torneos
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: torneotcg-torneos-service:${{ github.sha }}
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: HIGH,CRITICAL
+      - name: Desplegar entorno simulado en Docker Compose
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: docker compose up -d --wait --wait-timeout 360
+      - name: Prueba de humo del despliegue
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: |
+          set -euo pipefail
+          curl --retry 20 --retry-delay 5 --retry-connrefused -fsS http://localhost:8080/actuator/health
+          docker compose ps
+      - name: Diagnóstico de contenedores
+        if: failure()
+        run: docker compose ps --all && docker compose logs --no-color
+      - name: Limpiar entorno simulado
+        if: always()
+        run: docker compose down --volumes --remove-orphans
